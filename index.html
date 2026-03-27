@@ -3,132 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candid News Stream</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 40px 20px;
-            background-color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #1a1a1a;
-        }
-        #container { max-width: 650px; width: 100%; }
-        #status {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #888;
-            margin-bottom: 20px;
-        }
-        #output {
-            font-size: 16px;
-            line-height: 1.7;
-            min-height: 200px;
-        }
-        .article {
-            margin-bottom: 40px;
-            border-left: 2px solid #eee;
-            padding-left: 20px;
-            animation: fadeIn 0.5s ease;
-        }
-        .date { font-size: 12px; color: #888; display: block; }
-        .title { font-weight: 600; display: block; margin: 5px 0; }
-        .error-box { padding: 15px; background: #fff5f5; color: #c53030; border-radius: 4px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    </style>
+    <title>API Vertical Stream</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<div id="container">
-    <div id="status">Ready to fetch news...</div>
-    <div id="output"></div>
-    <button id="fetchBtn" style="background:#1a1a1a; color:white; border:none; padding:12px 24px; cursor:pointer; border-radius:4px;">Stream Latest News</button>
-</div>
-
-<script>
-    const output = document.getElementById('output');
-    const status = document.getElementById('status');
-    const fetchBtn = document.getElementById('fetchBtn');
-
-    // Your actual News API Key from your Candid Profile
-    const API_KEY = '7536886f47424dc0a2c4e9dff8b6f0f7';
-    const NEWS_URL = 'https://api.candid.org/news/v1/search';
-
-    async function streamText(element, text, speed = 20) {
-        return new Promise(resolve => {
-            let i = 0;
-            function type() {
-                if (i < text.length) {
-                    element.innerHTML += text.charAt(i);
-                    i++;
-                    window.scrollTo(0, document.body.scrollHeight);
-                    setTimeout(type, speed);
-                } else {
-                    resolve();
-                }
-            }
-            type();
-        });
-    }
-
-    fetchBtn.addEventListener('click', async () => {
-        fetchBtn.disabled = true;
-        output.innerHTML = '';
-        status.textContent = 'Fetching from Candid News...';
-
-        try {
-            const response = await fetch(NEWS_URL, {
-                method: 'GET',
-                headers: {
-                    'subscription-key': API_KEY,
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (!response.ok) throw new Error(`API Error: ${response.status}`);
-
-            const data = await response.json();
-            status.textContent = 'Streaming articles...';
-
-            // Iterate through the results and "stream" them to the UI
-            for (const article of data.hits || []) {
-                const articleDiv = document.createElement('div');
-                articleDiv.className = 'article';
-                output.appendChild(articleDiv);
-
-                // Stream the Date
-                const dateSpan = document.createElement('span');
-                dateSpan.className = 'date';
-                articleDiv.appendChild(dateSpan);
-                await streamText(dateSpan, article.publication_date || 'No Date');
-
-                // Stream the Title
-                const titleSpan = document.createElement('span');
-                titleSpan.className = 'title';
-                articleDiv.appendChild(titleSpan);
-                await streamText(titleSpan, article.title);
-
-                // Stream the Snippet
-                const contentSpan = document.createElement('span');
-                articleDiv.appendChild(contentSpan);
-                await streamText(contentSpan, article.snippet || 'No description available.');
-                
-                // Small pause between articles
-                await new Promise(r => setTimeout(r, 500));
-            }
-
-            status.textContent = 'Stream Complete';
-        } catch (err) {
-            status.textContent = 'Failed';
-            output.innerHTML = `<div class="error-box"><strong>Error:</strong> ${err.message}</div>`;
-        } finally {
-            fetchBtn.disabled = false;
-        }
-    });
-</script>
-
+    <div class="app-container">
+        <header>
+            <h1>Live Data Stream</h1>
+            <div id="status-indicator" class="online">Live</div>
+        </header>
+        
+        <main id="stream-container">
+            <div class="loading">Waiting for data...</div>
+        </main>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
