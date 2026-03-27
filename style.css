@@ -1,0 +1,144 @@
+:root {
+    --bg-gradient: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --accent: #007AFF;
+    --text-main: #1d1d1f;
+    --text-muted: #86868b;
+    --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg-gradient);
+    background-attachment: fixed;
+    margin: 0;
+    color: var(--text-main);
+    display: flex;
+    justify-content: center;
+    -webkit-font-smoothing: antialiased;
+}
+
+.app-container {
+    width: 100%;
+    max-width: 550px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    padding: 24px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.02em;
+}
+
+/* Status Pulse Animation */
+.online {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #28a745;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.online::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: #28a745;
+    border-radius: 50%;
+    display: inline-block;
+    box-shadow: 0 0 0 rgba(40, 167, 69, 0.4);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+#stream-container {
+    flex: 1;
+    overflow-y: overlay; /* Scrollbar doesn't shift layout */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* The Data Card */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 18px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: slideIn 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
+}
+
+.card small {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+}
+
+.card h3 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: var(--text-main);
+}
+
+.card p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #424245;
+}
+
+/* Smooth Entrance */
+@keyframes slideIn {
+    from { 
+        opacity: 0; 
+        transform: scale(0.95) translateY(30px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+    }
+}
+
+/* Custom Scrollbar for the UX feel */
+#stream-container::-webkit-scrollbar {
+    width: 6px;
+}
+#stream-container::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
