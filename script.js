@@ -2,7 +2,7 @@ const streamContainer = document.getElementById('stream-container');
 
 // Configuration
 const PROXY_URL = "https://cors-anywhere.herokuapp.com/";
-const API_URL = "https://api.candid.org/news/v1"; 
+const API_URL = "https://api.candid.org/news/v1/articles"; 
 const API_KEY = "7536886f47424dc0a2c4e9dff8b6f0f7";
 
 let articles = [];
@@ -10,30 +10,34 @@ let currentIndex = 0;
 
 async function fetchCandidNews() {
     try {
-        // Adding the API key to headers as required by most professional APIs
+        // We use x-api-key as the header for Candid
         const response = await fetch(PROXY_URL + API_URL, {
-    headers: {
-        'Authorization': `Bearer 7536886f47424dc0a2c4e9dff8b6f0f7`,
-        'Content-Type': 'application/json'
-    }
-});
+            method: 'GET',
+            headers: {
+                'x-api-key': API_KEY,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const data = await response.json();
         
-        // Assuming the API returns an array in a field called 'data' or 'articles'
-        // Adjust 'data.articles' based on the exact JSON structure
-        articles = data.articles || data.data || data; 
+        // Target the correct data array from Candid's response
+        articles = data.articles || data.data || []; 
         
         if (articles.length > 0) {
             streamNextArticle();
+        } else {
+            streamContainer.innerHTML = '<div class="card"><h3>No News Found</h3><p>The API returned an empty list.</p></div>';
         }
     } catch (error) {
         console.error("CORS or Fetch error:", error);
-        // Fallback: Show error in UI
-        streamContainer.innerHTML = `<div class="card" style="border-left-color: #ff3b30;">
-            <h3>Connection Error</h3>
-            <p>Please ensure you have granted temporary access to the <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">CORS Proxy</a>.</p>
-        </div>`;
+        streamContainer.innerHTML = `
+            <div class="card" style="border-left: 4px solid #ff3b30;">
+                <h3>Connection Required</h3>
+                <p>Please click "Request temporary access" at the <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">CORS Proxy</a> to see live news.</p>
+            </div>`;
     }
 }
 
