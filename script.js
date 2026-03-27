@@ -12,11 +12,11 @@ async function fetchCandidNews() {
     try {
         // Adding the API key to headers as required by most professional APIs
         const response = await fetch(PROXY_URL + API_URL, {
-            headers: {
-                'Authorization': `Bearer ${API_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        });
+    headers: {
+        'Authorization': `Bearer 7536886f47424dc0a2c4e9dff8b6f0f7`,
+        'Content-Type': 'application/json'
+    }
+});
         
         const data = await response.json();
         
