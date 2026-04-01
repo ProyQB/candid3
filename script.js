@@ -2,61 +2,60 @@ const API_KEY = '7536886f47424dc0a2c4e9dff8b6f0f7';
 const terminal = document.getElementById('terminal');
 const connectBtn = document.getElementById('connectBtn');
 
-// Automatically turns text URLs into clickable blue links
 function linkify(text) {
     const urlPattern = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlPattern, (url) => {
-        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="stream-link">${url}</a>`;
-    });
+    return text.replace(urlPattern, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="stream-link">${url}</a>`);
 }
 
-function appendLog(level, message) {
+function log(level, message) {
     const now = new Date().toLocaleTimeString();
     const div = document.createElement('div');
-    div.className = 'line';
-    div.innerHTML = `
-        <span class="timestamp">${now}</span>
-        <span class="tag-${level.toLowerCase()}">[${level}]</span>
-        <span class="content">${linkify(message)}</span>
-    `;
+    div.className = `line ${level.toLowerCase()}`;
+    div.innerHTML = `<span class="timestamp">${now}</span> <span class="tag-${level.toLowerCase()}">[${level}]</span> ${linkify(message)}`;
     terminal.appendChild(div);
     terminal.scrollTop = terminal.scrollHeight;
 }
 
 async function startStream() {
-    terminal.innerHTML = ""; 
-    appendLog("INFO", "Bypassing CORS filters and connecting to Candid...");
+    terminal.innerHTML = "";
+    log("INFO", "Connecting to Candid News API...");
 
-    // Using the 'allorigins' wrapper which is more successful on GitHub Pages
-    const targetUrl = `https://api.candid.org/news/v1/search?apiKey=${API_KEY}`;
+    // Added 'q=community' to ensure the API has something to search for
+    const targetUrl = `https://api.candid.org/news/v1/search?q=community&apiKey=${API_KEY}`;
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
     try {
         const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error("Network response was not ok");
-        
         const wrapper = await response.json();
         
-        // The actual API data is inside wrapper.contents as a string
+        if (!wrapper.contents) throw new Error("Blank response from proxy.");
+        
         const data = JSON.parse(wrapper.contents);
 
-        if (data.data && data.data.length > 0) {
-            appendLog("OK", `Success! Found ${data.data.length} articles.`);
+        // Debug: Log the structure to console so we can see what Candid is sending
+        console.log("Candid API Response:", data);
+
+        // Check if data.data exists (Candid's standard format)
+        const newsItems = data.data || data.results || [];
+
+        if (newsItems.length > 0) {
+            log("OK", `Found ${newsItems.length} articles. Starting stream...`);
             
-            data.data.forEach((article, index) => {
+            newsItems.forEach((item, index) => {
                 setTimeout(() => {
-                    const title = article.title || "News Update";
-                    const url = article.url || "https://candid.org";
-                    appendLog("INFO", `${title} — ${url}`);
-                }, index * 850);
+                    const title = item.title || "Untitled Article";
+                    const url = item.url || "No URL provided";
+                    log("INFO", `${title} — ${url}`);
+                }, index * 800);
             });
         } else {
-            appendLog("ERROR", "No data found. Check if your API key has 'News v1' permissions.");
+            // If empty, let's report the exact message from Candid
+            const msg = data.message || "The API returned 0 results for this query.";
+            log("WARN", msg);
         }
 
     } catch (error) {
-        appendLog("ERROR", `Connection Failed: ${error.message}`);
-        console.error("Diagnostic Info:", error);
+        log("ERROR", `System Error: ${error.message}`);
     }
 }
 
