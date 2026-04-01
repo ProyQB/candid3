@@ -1,62 +1,56 @@
 body {
     background: #09090b;
-    color: #fafafa;
-    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
-    display: flex;
-    justify-content: center;
+    color: #e4e4e7;
+    font-family: 'Courier New', monospace;
     padding: 20px;
 }
 
-.stream-container {
-    width: 100%;
-    max-width: 850px;
+.terminal-container {
+    max-width: 800px;
+    margin: 0 auto;
     border: 1px solid #27272a;
-    border-radius: 10px;
+    border-radius: 8px;
+    background: #000;
     overflow: hidden;
 }
 
-.stream-header {
+.terminal-header {
     background: #18181b;
     padding: 12px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #27272a;
 }
 
-.title-wrapper { display: flex; align-items: center; gap: 10px; }
-.status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 10px #22c55e; }
-h1 { font-size: 14px; margin: 0; color: #a1a1aa; letter-spacing: 1px; }
+.status { display: flex; align-items: center; gap: 8px; }
+.dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 8px #22c55e; }
+h1 { font-size: 12px; margin: 0; color: #a1a1aa; }
 
-button {
+#connectBtn {
     background: #2563eb;
     color: white;
     border: none;
-    padding: 6px 14px;
+    padding: 6px 15px;
     border-radius: 4px;
     cursor: pointer;
-    font-weight: 600;
 }
 
 .terminal-body {
-    height: 600px;
-    background: #000;
+    height: 500px;
     padding: 15px;
     overflow-y: auto;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
-.log-line { margin-bottom: 6px; padding-left: 10px; border-left: 2px solid #18181b; }
-.timestamp { color: #52525b; margin-right: 8px; }
-.label { color: #3b82f6; font-weight: bold; margin-right: 8px; }
+.line { margin-bottom: 6px; }
+.time { color: #52525b; margin-right: 10px; }
+.tag-info { color: #3b82f6; font-weight: bold; margin-right: 5px; }
+.tag-error { color: #ef4444; }
 
-/* The Link Design */
+/* Clickable Links */
 .stream-link {
     color: #60a5fa;
     text-decoration: underline;
-    transition: color 0.2s;
 }
-
 .stream-link:hover { color: #93c5fd; }
-.system-msg { color: #71717a; font-style: italic; }
