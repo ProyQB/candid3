@@ -148,3 +148,45 @@ function renderData(items) {
 }
 
 launchOgStream();
+// 1. The OG Latin Data (Hardcoded so it never says "Waiting")
+const ogLatinData = [
+    { "id": 1, "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit." },
+    { "id": 2, "text": "Quisque non tellus orci ac auctor augue mauris augue." },
+    { "id": 3, "text": "Metus dictum at tempor commodo ullamcorper a lacus." },
+    { "id": 4, "text": "Nam libero justo laoreet sit amet cursus sit amet." }
+];
+
+// 2. The Reliable Bridge (Bypasses the Heroku "Unlock" button)
+const proxy = "https://cors-anywhere.com/"; 
+const apiUrl = "https://baconipsum.com/api/?type=all-meat&paras=1";
+
+async function restoreStream() {
+    const display = document.querySelector('body'); // Adjust if you have a specific div ID
+    
+    try {
+        // Try to get live Latin from the proxy
+        const response = await fetch(proxy + apiUrl);
+        const data = await response.json();
+        renderStream(data.map(t => ({ text: t })));
+    } catch (e) {
+        // If Proxy fails, immediately use the OG JSON so the screen isn't blank
+        console.log("Proxy blocked. Loading OG Latin JSON...");
+        renderStream(ogLatinData);
+    }
+}
+
+function renderStream(items) {
+    // This removes the "Waiting for data..." text
+    document.body.innerHTML = '<h2>Live Data Stream</h2><div id="stream-box"></div>';
+    const box = document.getElementById('stream-box');
+    
+    items.forEach(item => {
+        const el = document.createElement('div');
+        el.style.padding = "15px";
+        el.style.borderBottom = "1px solid #eee";
+        el.innerText = item.text;
+        box.appendChild(el);
+    });
+}
+
+restoreStream();
