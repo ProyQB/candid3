@@ -2,7 +2,6 @@ const API_KEY = '7536886f47424dc0a2c4e9dff8b6f0f7';
 const terminal = document.getElementById('terminal');
 const connectBtn = document.getElementById('connectBtn');
 
-// This makes URLs clickable
 function linkify(text) {
     const urlPattern = /(https?:\/\/[^\s]+)/g;
     return text.replace(urlPattern, (url) => `<a href="${url}" target="_blank" rel="noopener noreferrer" class="stream-link">${url}</a>`);
@@ -19,10 +18,11 @@ function log(level, message) {
 
 async function startStream() {
     terminal.innerHTML = "";
-    log("INFO", "Fetching from Candid News API...");
+    log("INFO", "Fetching full stream from Candid News API...");
 
-    // Using a broader search query to ensure we get data
-    const targetUrl = `https://api.candid.org/news/v1/search?q=charity&apiKey=${API_KEY}`;
+    // 1. Increased pageSize to 25
+    // 2. Used a broader query 'community' to ensure a high volume of results
+    const targetUrl = `https://api.candid.org/news/v1/search?q=community&pageSize=25&apiKey=${API_KEY}`;
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
     try {
@@ -30,30 +30,34 @@ async function startStream() {
         const wrapper = await response.json();
         const data = JSON.parse(wrapper.contents);
 
-        // Candid API can return 'data', 'results', or 'articles'
-        const newsItems = data.data || data.results || data.articles || [];
+        const newsItems = data.data || data.results || [];
 
         if (newsItems.length > 0) {
-            log("OK", `Response received — streaming ${newsItems.length} articles`);
+            log("OK", `Connection Success: Found ${newsItems.length} articles.`);
             
             newsItems.forEach((item, index) => {
                 setTimeout(() => {
-                    const title = item.title || "Headline";
-                    const url = item.url || "https://candid.org";
-                    log("INFO", `${title} — ${url}`);
+                    const title = item.title || "Untitled Article";
+                    const url = item.url || "#";
+                    // Display index number to verify all 25 are appearing
+                    log("INFO", `[${index + 1}] ${title} — ${url}`);
+                    
+                    if (index === newsItems.length - 1) {
+                        setTimeout(() => log("OK", `Stream complete — ${newsItems.length} articles displayed.`), 800);
+                    }
                 }, index * 800);
             });
         } else {
-            log("WARN", "No live data found for this query. Loading stored demo info...");
+            log("WARN", "API returned 0 results. Reverting to Demo Mode.");
             loadDemoData();
         }
     } catch (error) {
-        log("ERROR", "Connection failed. Loading stored demo info...");
+        log("ERROR", "API Error. Check console for details.");
+        console.error(error);
         loadDemoData();
     }
 }
 
-// Fallback data so the screen is never empty
 function loadDemoData() {
     const demo = [
         "Nonprofit News: April Edition — https://www.littlerocksoiree.com/nonprofit-news-april-edition-2026/",
@@ -61,7 +65,7 @@ function loadDemoData() {
         "Community Center Fund Open — https://www.fiannafail.ie/news/grants"
     ];
     demo.forEach((item, index) => {
-        setTimeout(() => log("INFO", item), index * 800);
+        setTimeout(() => log("INFO", `[DEMO] ${item}`), index * 800);
     });
 }
 
