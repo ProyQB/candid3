@@ -1,14 +1,15 @@
 body { background: #09090b; color: #e4e4e7; font-family: 'Courier New', monospace; padding: 20px; }
 .terminal-container { max-width: 850px; margin: 0 auto; border: 1px solid #27272a; border-radius: 8px; background: #000; overflow: hidden; }
-.terminal-header { background: #18181b; padding: 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #27272a; }
+.terminal-header { background: #18181b; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
 .dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; display: inline-block; margin-right: 10px; box-shadow: 0 0 8px #22c55e; }
 h1 { font-size: 14px; margin: 0; color: #a1a1aa; display: inline; }
 #connectBtn { background: #2563eb; color: white; border: none; padding: 8px 18px; border-radius: 4px; cursor: pointer; font-weight: bold; }
 .terminal-body { height: 550px; padding: 20px; overflow-y: auto; font-size: 13px; line-height: 1.6; }
 .line { margin-bottom: 8px; border-left: 2px solid #18181b; padding-left: 10px; }
 .timestamp { color: #52525b; margin-right: 10px; }
-.tag-info { color: #3b82f6; font-weight: bold; margin-right: 5px; }
+.tag-info { color: #3b82f6; font-weight: bold; }
 .tag-error { color: #ef4444; font-weight: bold; }
 .tag-ok { color: #22c55e; font-weight: bold; }
+/* Link Styling */
 .stream-link { color: #60a5fa; text-decoration: underline; cursor: pointer; }
 .stream-link:hover { color: #93c5fd; }
