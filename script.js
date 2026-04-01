@@ -19,47 +19,42 @@ function log(level, message) {
 
 async function startStream() {
     terminal.innerHTML = "";
-    log("INFO", "Initializing bypass tunnel...");
+    log("INFO", "Establishing connection to Candid News...");
 
-    // Candid API Search URL
+    // We use a wildcard search 'q=*' to ensure results return
     const targetUrl = `https://api.candid.org/news/v1/search?q=*&apiKey=${API_KEY}`;
     
-    // Using AllOrigins with a 'callback' parameter forces the browser to treat this as a script, 
-    // which ignores the "Failed to fetch" security block.
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}&callback=processData`;
+    // Using a more direct proxy bypass
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
     try {
-        const script = document.createElement('script');
-        script.src = proxyUrl;
-        document.body.appendChild(script);
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error("Proxy connection failed.");
         
-        // Remove the script tag after it loads to keep the HTML clean
-        script.onload = () => document.body.removeChild(script);
-
-    } catch (error) {
-        log("ERROR", "Connection refused by browser.");
-    }
-}
-
-// This function is called automatically when the API data returns
-window.processData = function(wrapper) {
-    try {
+        const wrapper = await response.json();
         const data = JSON.parse(wrapper.contents);
-        const news = data.data || data.results || [];
 
-        if (news.length > 0) {
-            log("OK", `Tunnel Open. Streaming ${news.length} articles...`);
-            news.forEach((item, index) => {
+        // Map the results from Candid's 'data' array
+        const newsItems = data.data || [];
+
+        if (newsItems.length > 0) {
+            log("OK", `Success: Streaming ${newsItems.length} news items...`);
+            
+            newsItems.forEach((item, index) => {
                 setTimeout(() => {
-                    log("INFO", `${item.title} — ${item.url}`);
-                }, index * 800);
+                    const title = item.title || "Untitled Article";
+                    const url = item.url || "#";
+                    log("INFO", `${title} — ${url}`);
+                }, index * 800); // 800ms delay between each line
             });
         } else {
-            log("WARN", "No data found. Ensure your API key is active for News v1.");
+            log("WARN", "Connection established, but no news articles were found for this key.");
         }
-    } catch (e) {
-        log("ERROR", "Data format error. The API key might be restricted.");
+
+    } catch (error) {
+        log("ERROR", `Stream Error: ${error.message}`);
+        console.error("Full Debug Trace:", error);
     }
-};
+}
 
 connectBtn.addEventListener('click', startStream);
