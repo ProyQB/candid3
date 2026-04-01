@@ -2,7 +2,7 @@ const API_KEY = '7536886f47424dc0a2c4e9dff8b6f0f7';
 const terminal = document.getElementById('terminal');
 const connectBtn = document.getElementById('connectBtn');
 
-// Helper to make URLs clickable
+// This function finds URLs and wraps them in clickable <a> tags
 function linkify(text) {
     const urlPattern = /(https?:\/\/[^\s]+)/g;
     return text.replace(urlPattern, (url) => {
@@ -25,37 +25,42 @@ function appendLog(level, message) {
 
 async function startStream() {
     terminal.innerHTML = ""; 
-    appendLog("INFO", "Connecting to Candid News API...");
+    appendLog("INFO", "Connecting to Candid News API via AllOrigins Proxy...");
     
-    // 1. Updated the URL to the correct /search endpoint
-    // 2. Switched to a more reliable proxy format
+    // Correct endpoint for News Search
     const targetUrl = `https://api.candid.org/news/v1/search?apiKey=${API_KEY}`;
+    
+    // AllOrigins is a more stable proxy for this type of request
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
     try {
         const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error("Proxy connection failed");
+        if (!response.ok) throw new Error("Proxy server returned an error.");
         
         const wrapper = await response.json();
-        // allorigins wraps the result in a .contents string
+        
+        // AllOrigins wraps the result inside a "contents" string
+        if (!wrapper.contents) throw new Error("No data received from proxy.");
+        
         const data = JSON.parse(wrapper.contents);
 
         if (data.data && data.data.length > 0) {
-            appendLog("OK", `Connected. Streaming ${data.data.length} articles...`);
+            appendLog("OK", `Success! Streaming ${data.data.length} articles...`);
             
             data.data.forEach((article, index) => {
                 setTimeout(() => {
+                    // This creates the clickable line with Title and URL
                     const msg = `${article.title} — ${article.url}`;
                     appendLog("INFO", msg);
                 }, index * 800);
             });
         } else {
-            appendLog("WARN", "No articles found in the response.");
+            appendLog("WARN", "Connection successful, but no news articles were found.");
         }
 
     } catch (error) {
         appendLog("ERROR", `Stream failed: ${error.message}`);
-        console.error(error);
+        console.error("Full Error Details:", error);
     }
 }
 
