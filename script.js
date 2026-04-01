@@ -101,3 +101,50 @@ function displayMessage(msg) {
 // Initial Fetch
 fetchCandidNews();
 setInterval(streamNextArticle, 5000);
+// 1. Use the more reliable community proxy
+const proxyUrl = "https://cors-anywhere.com/"; 
+const targetApi = "https://api.yourdatasource.com/stream"; // Replace with your actual OG API link
+
+const streamContainer = document.getElementById('live-stream');
+const statusText = document.getElementById('status-text');
+
+async function launchOgStream() {
+    try {
+        // Try to fetch real English data
+        const response = await fetch(proxyUrl + targetApi);
+        if (!response.ok) throw new Error('Proxy limit reached');
+        
+        const data = await response.json();
+        renderData(data);
+        
+        statusText.innerText = "Online";
+        statusText.style.color = "#4CAF50";
+    } catch (error) {
+        console.warn("Connection issue, reverting to OG Latin Fallback...");
+        loadLatinFallback();
+    }
+}
+
+// 2. The OG Latin Fallback (What you saw when it first started)
+function loadLatinFallback() {
+    const dummyData = [
+        "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
+        "Vestibulum ante ipsum primis in faucibus orci luctus.",
+        "Ut enim ad minim veniam, quis nostrud exercitation."
+    ];
+    
+    statusText.innerText = "Online (Demo Mode)";
+    renderData(dummyData);
+}
+
+function renderData(items) {
+    streamContainer.innerHTML = ''; // Clears the "Error" card
+    items.forEach(text => {
+        const div = document.createElement('div');
+        div.className = 'stream-entry';
+        div.innerText = text;
+        streamContainer.appendChild(div);
+    });
+}
+
+launchOgStream();
