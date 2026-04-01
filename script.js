@@ -2,60 +2,61 @@ const API_KEY = '7536886f47424dc0a2c4e9dff8b6f0f7';
 const terminal = document.getElementById('terminal');
 const connectBtn = document.getElementById('connectBtn');
 
-// Automatically wraps any URL in a clickable <a> tag
+// Helper to make URLs clickable
 function linkify(text) {
     const urlPattern = /(https?:\/\/[^\s]+)/g;
     return text.replace(urlPattern, (url) => {
-        return `<a href="${url}" target="_blank" rel="noopener" class="stream-link">${url}</a>`;
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="stream-link">${url}</a>`;
     });
 }
 
-function addLine(type, message) {
-    const time = new Date().toLocaleTimeString('en-US', { hour12: false });
-    const div = document.createElement('div');
-    div.className = 'log-line';
-    
-    div.innerHTML = `
-        <span class="timestamp">${time}</span>
-        <span class="label">[${type}]</span>
+function appendLog(level, message) {
+    const now = new Date().toLocaleTimeString();
+    const line = document.createElement('div');
+    line.className = 'line';
+    line.innerHTML = `
+        <span class="timestamp">${now}</span>
+        <span class="tag tag-${level.toLowerCase()}">[${level}]</span>
         <span class="content">${linkify(message)}</span>
     `;
-    
-    terminal.appendChild(div);
-    terminal.scrollTop = terminal.scrollHeight; // Auto-scrolls to bottom
+    terminal.appendChild(line);
+    terminal.scrollTop = terminal.scrollHeight;
 }
 
-async function fetchCandidData() {
-    addLine("SYSTEM", "Attempting connection to Candid News...");
+async function startStream() {
+    terminal.innerHTML = ""; 
+    appendLog("INFO", "Connecting to Candid News API...");
     
-    // Using a proxy to bypass CORS restrictions
-    const proxy = "https://corsproxy.io/?";
-    const target = `https://api.candid.org/news/v1/search?apiKey=${API_KEY}`;
-    
+    // 1. Updated the URL to the correct /search endpoint
+    // 2. Switched to a more reliable proxy format
+    const targetUrl = `https://api.candid.org/news/v1/search?apiKey=${API_KEY}`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+
     try {
-        const response = await fetch(proxy + encodeURIComponent(target));
-        const json = await response.json();
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error("Proxy connection failed");
         
-        // Candid API returns an array of objects in 'data'
-        const newsItems = json.data || [];
-        
-        addLine("SUCCESS", `Connected. Streaming ${newsItems.length} records...`);
+        const wrapper = await response.json();
+        // allorigins wraps the result in a .contents string
+        const data = JSON.parse(wrapper.contents);
 
-        // Display results one-by-one to create a "stream" effect
-        newsItems.forEach((item, index) => {
-            setTimeout(() => {
-                const title = item.title || "No Title";
-                const link = item.url || "No Link";
-                addLine("INFO", `${title} — Source: ${link}`);
-            }, index * 1000); // 1 second delay between items
-        });
+        if (data.data && data.data.length > 0) {
+            appendLog("OK", `Connected. Streaming ${data.data.length} articles...`);
+            
+            data.data.forEach((article, index) => {
+                setTimeout(() => {
+                    const msg = `${article.title} — ${article.url}`;
+                    appendLog("INFO", msg);
+                }, index * 800);
+            });
+        } else {
+            appendLog("WARN", "No articles found in the response.");
+        }
 
-    } catch (err) {
-        addLine("ERROR", `Stream failed: ${err.message}`);
+    } catch (error) {
+        appendLog("ERROR", `Stream failed: ${error.message}`);
+        console.error(error);
     }
 }
 
-connectBtn.addEventListener('click', () => {
-    terminal.innerHTML = ""; // Clear for new stream
-    fetchCandidData();
-});
+connectBtn.addEventListener('click', startStream);
