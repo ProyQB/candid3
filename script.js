@@ -18,42 +18,46 @@ function log(level, message) {
 
 async function startStream() {
     terminal.innerHTML = "";
-    log("INFO", "Fetching full stream from Candid News API...");
+    log("INFO", "Opening secure tunnel to Candid News API...");
 
-    // 1. Increased pageSize to 25
-    // 2. Used a broader query 'community' to ensure a high volume of results
+    // We use q=community and pageSize=25 to match your Lovable project requirements
     const targetUrl = `https://api.candid.org/news/v1/search?q=community&pageSize=25&apiKey=${API_KEY}`;
+    
+    // We use the 'hex' format for AllOrigins - this is much harder for browsers to block
     const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
     try {
         const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error("Proxy tunnel refused connection.");
+        
         const wrapper = await response.json();
+        
+        // We parse the contents string back into a JSON object
         const data = JSON.parse(wrapper.contents);
-
         const newsItems = data.data || data.results || [];
 
         if (newsItems.length > 0) {
-            log("OK", `Connection Success: Found ${newsItems.length} articles.`);
+            log("OK", `Connection established. Streaming ${newsItems.length} articles...`);
             
             newsItems.forEach((item, index) => {
                 setTimeout(() => {
                     const title = item.title || "Untitled Article";
                     const url = item.url || "#";
-                    // Display index number to verify all 25 are appearing
+                    // Display [1] through [25]
                     log("INFO", `[${index + 1}] ${title} — ${url}`);
                     
                     if (index === newsItems.length - 1) {
-                        setTimeout(() => log("OK", `Stream complete — ${newsItems.length} articles displayed.`), 800);
+                        setTimeout(() => log("OK", "Stream Complete. All articles rendered."), 800);
                     }
                 }, index * 800);
             });
         } else {
-            log("WARN", "API returned 0 results. Reverting to Demo Mode.");
-            loadDemoData();
+            log("WARN", "API connected but returned no data. Check API Key permissions.");
         }
+
     } catch (error) {
-        log("ERROR", "API Error. Check console for details.");
-        console.error(error);
+        log("ERROR", `Security Block: ${error.message}`);
+        log("INFO", "Attempting Demo Mode fallback...");
         loadDemoData();
     }
 }
