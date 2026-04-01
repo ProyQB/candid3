@@ -2,7 +2,7 @@ const API_KEY = '7536886f47424dc0a2c4e9dff8b6f0f7';
 const terminal = document.getElementById('terminal');
 const connectBtn = document.getElementById('connectBtn');
 
-// This function makes any URL in the text clickable
+// Automatically turns text URLs into clickable blue links
 function linkify(text) {
     const urlPattern = /(https?:\/\/[^\s]+)/g;
     return text.replace(urlPattern, (url) => {
@@ -10,54 +10,53 @@ function linkify(text) {
     });
 }
 
-function log(level, message) {
+function appendLog(level, message) {
     const now = new Date().toLocaleTimeString();
     const div = document.createElement('div');
-    div.className = `line ${level.toLowerCase()}`;
-    div.innerHTML = `<span class="time">${now}</span> <span class="tag">[${level}]</span> ${linkify(message)}`;
+    div.className = 'line';
+    div.innerHTML = `
+        <span class="timestamp">${now}</span>
+        <span class="tag-${level.toLowerCase()}">[${level}]</span>
+        <span class="content">${linkify(message)}</span>
+    `;
     terminal.appendChild(div);
     terminal.scrollTop = terminal.scrollHeight;
 }
 
 async function startStream() {
-    terminal.innerHTML = "";
-    log("INFO", "Initiating secure tunnel to Candid News API...");
+    terminal.innerHTML = ""; 
+    appendLog("INFO", "Bypassing CORS filters and connecting to Candid...");
 
-    // Using the 'allorigins' hex-encoded method to prevent proxy blocking
-    const target = `https://api.candid.org/news/v1/search?apiKey=${API_KEY}`;
-    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(target)}`;
+    // Using the 'allorigins' wrapper which is more successful on GitHub Pages
+    const targetUrl = `https://api.candid.org/news/v1/search?apiKey=${API_KEY}`;
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
 
     try {
-        const response = await fetch(proxy);
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error("Network response was not ok");
         
-        if (!response.ok) throw new Error("Proxy Server Unreachable");
-
         const wrapper = await response.json();
         
-        // AllOrigins returns the API data as a string inside 'contents'
-        if (!wrapper.contents) throw new Error("Empty response from API");
-        
+        // The actual API data is inside wrapper.contents as a string
         const data = JSON.parse(wrapper.contents);
 
-        // Check if Candid returned an error message inside the JSON
-        if (data.error || data.message === "Unauthorized") {
-            throw new Error(data.message || "Invalid API Key");
+        if (data.data && data.data.length > 0) {
+            appendLog("OK", `Success! Found ${data.data.length} articles.`);
+            
+            data.data.forEach((article, index) => {
+                setTimeout(() => {
+                    const title = article.title || "News Update";
+                    const url = article.url || "https://candid.org";
+                    appendLog("INFO", `${title} — ${url}`);
+                }, index * 850);
+            });
+        } else {
+            appendLog("ERROR", "No data found. Check if your API key has 'News v1' permissions.");
         }
 
-        const newsItems = data.data || [];
-        log("OK", `Connection Verified. Streaming ${newsItems.length} articles...`);
-
-        newsItems.forEach((item, index) => {
-            setTimeout(() => {
-                const title = item.title || "Untitled Article";
-                const url = item.url || "#";
-                log("INFO", `${title} — ${url}`);
-            }, index * 800);
-        });
-
-    } catch (err) {
-        log("ERROR", `Status: ${err.message}`);
-        log("SYSTEM", "Tip: Ensure your Candid API key is active for 'News v1' in your dashboard.");
+    } catch (error) {
+        appendLog("ERROR", `Connection Failed: ${error.message}`);
+        console.error("Diagnostic Info:", error);
     }
 }
 
