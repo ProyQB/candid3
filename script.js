@@ -13,32 +13,32 @@ async function fetchCandidNews() {
     try {
         updateStatus(true);
         
-        // Added a "cache buster" (?t=...) to force the browser to bypass the "Blocked" cache
-        const cacheBuster = `&t=${new Date().getTime()}`;
-        const finalUrl = PROXY_URL + API_URL + "?lang=en" + cacheBuster;
+        // 1. Force English and add a timestamp to bypass the "Blocked" cache
+        const finalUrl = `${PROXY_URL}${API_URL}?lang=en&t=${Date.now()}`;
 
         const response = await fetch(finalUrl, {
             method: 'GET',
             headers: {
                 'x-api-key': API_KEY,
-                'Content-Type': 'application/json'
+                // Removed extra headers that often trigger proxy blocks
             }
         });
         
         if (!response.ok) {
             if (response.status === 403) throw new Error("PROXY_LOCKED");
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP ${response.status}`);
         }
         
         const data = await response.json();
         
-        // Handle different possible Candid data structures
-        articles = data.articles || data.data || data.results || []; 
+        // 2. Map the data - Candid usually returns an array named 'articles' or 'data'
+        articles = data.articles || data.data || []; 
         
         if (articles.length > 0) {
             streamNextArticle();
         } else {
-            throw new Error("NO_ARTICLES");
+            // If the API works but is empty, we show a friendly message
+            displayMessage("No updates found in English right now.");
         }
     } catch (error) {
         console.error("Stream Error:", error);
@@ -48,19 +48,19 @@ async function fetchCandidNews() {
 
 function handleFetchError(error) {
     updateStatus(false);
-    let title = "Stream Offline";
-    let message = "Check your connection or API key.";
-
     if (error.message === "PROXY_LOCKED") {
-        title = "Action Required";
-        message = 'Your browser is still blocking the proxy. Click "Request Access" again at the <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" style="color:white;text-decoration:underline;">Proxy Demo</a> and then refresh this page.';
+        streamContainer.innerHTML = `
+            <div class="card" style="background: #ff3b30; color: white;">
+                <h3>Access Required</h3>
+                <p>Click <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" style="color:white;text-decoration:underline;">HERE</a> to unlock the proxy, then refresh this page.</p>
+            </div>`;
+    } else {
+        displayMessage("Stream Offline. Checking connection...");
     }
+}
 
-    streamContainer.innerHTML = `
-        <div class="card" style="background: #ff3b30; color: white; border: none;">
-            <h3>${title}</h3>
-            <p>${message}</p>
-        </div>`;
+function displayMessage(msg) {
+    streamContainer.innerHTML = `<div class="card"><h3>Update</h3><p>${msg}</p></div>`;
 }
 
 function updateStatus(isOnline) {
@@ -72,15 +72,12 @@ function updateStatus(isOnline) {
 
 function streamNextArticle() {
     if (articles.length === 0) return;
-    const item = articles[currentIndex];
-    renderCard(item);
+    renderCard(articles[currentIndex]);
     currentIndex = (currentIndex + 1) % articles.length;
 }
 
 function renderCard(item) {
-    if (document.querySelector('.loading')) {
-        streamContainer.innerHTML = '';
-    }
+    if (document.querySelector('.loading')) streamContainer.innerHTML = '';
 
     const isAtTop = streamContainer.scrollTop < 10;
     const previousHeight = streamContainer.scrollHeight;
@@ -88,24 +85,22 @@ function renderCard(item) {
     const card = document.createElement('div');
     card.className = 'card';
     
-    // Ensure English fallbacks
-    const title = item.title || "Latest Update";
-    const description = item.description || item.summary || "Tap 'Read More' for the full story.";
-    const source = item.source || "Candid";
-    const link = item.url || "#";
+    // Fallbacks to ensure English text appears
+    const title = item.title || "News Update";
+    const description = item.description || item.summary || "Click below to read the full article.";
+    const source = item.source || "Candid News";
 
     card.innerHTML = `
         <small>${source} — ${new Date().toLocaleTimeString('en-US')}</small>
         <h3>${title}</h3>
         <p style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${description}</p>
-        <a href="${link}" target="_blank" style="font-size: 0.8rem; color: #007AFF; text-decoration: none; margin-top: 10px; display: inline-block; font-weight: 600;">Read more →</a>
+        <a href="${item.url || '#'}" target="_blank" style="font-size: 0.8rem; color: #007AFF; text-decoration: none; margin-top: 10px; display: inline-block; font-weight: 600;">Read more →</a>
     `;
 
     streamContainer.prepend(card);
 
     if (!isAtTop) {
-        const heightDiff = streamContainer.scrollHeight - previousHeight;
-        streamContainer.scrollTop += heightDiff;
+        streamContainer.scrollTop += (streamContainer.scrollHeight - previousHeight);
     }
 }
 
