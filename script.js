@@ -13,54 +13,44 @@ async function fetchCandidNews() {
     try {
         updateStatus(true);
         
-        // 1. Force English and add a timestamp to bypass the "Blocked" cache
-        const finalUrl = `${PROXY_URL}${API_URL}?lang=en&t=${Date.now()}`;
+        // TWEAK: Adding 'lang=en' and a random 'cache-buster' timestamp
+        const timestamp = new Date().getTime();
+        const finalUrl = `${PROXY_URL}${API_URL}?lang=en&v=${timestamp}`;
 
         const response = await fetch(finalUrl, {
             method: 'GET',
             headers: {
                 'x-api-key': API_KEY,
-                // Removed extra headers that often trigger proxy blocks
+                'Accept': 'application/json'
             }
         });
         
-        if (!response.ok) {
-            if (response.status === 403) throw new Error("PROXY_LOCKED");
-            throw new Error(`HTTP ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         
         const data = await response.json();
         
-        // 2. Map the data - Candid usually returns an array named 'articles' or 'data'
+        // Target the articles array
         articles = data.articles || data.data || []; 
         
         if (articles.length > 0) {
             streamNextArticle();
         } else {
-            // If the API works but is empty, we show a friendly message
-            displayMessage("No updates found in English right now.");
+            displayMessage("No English articles found at the moment.");
         }
     } catch (error) {
-        console.error("Stream Error:", error);
+        console.error("Fetch error:", error);
         handleFetchError(error);
     }
 }
 
 function handleFetchError(error) {
     updateStatus(false);
-    if (error.message === "PROXY_LOCKED") {
-        streamContainer.innerHTML = `
-            <div class="card" style="background: #ff3b30; color: white;">
-                <h3>Access Required</h3>
-                <p>Click <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank" style="color:white;text-decoration:underline;">HERE</a> to unlock the proxy, then refresh this page.</p>
-            </div>`;
-    } else {
-        displayMessage("Stream Offline. Checking connection...");
-    }
-}
-
-function displayMessage(msg) {
-    streamContainer.innerHTML = `<div class="card"><h3>Update</h3><p>${msg}</p></div>`;
+    streamContainer.innerHTML = `
+        <div class="card" style="border-left: 4px solid #ff3b30;">
+            <h3>Stream Connection Error</h3>
+            <p>The proxy might need a fresh unlock or your API key is invalid.</p>
+            <button onclick="location.reload()" style="margin-top:10px; padding:8px; background:#007AFF; color:white; border:none; border-radius:5px; cursor:pointer;">Retry Now</button>
+        </div>`;
 }
 
 function updateStatus(isOnline) {
@@ -85,10 +75,10 @@ function renderCard(item) {
     const card = document.createElement('div');
     card.className = 'card';
     
-    // Fallbacks to ensure English text appears
-    const title = item.title || "News Update";
-    const description = item.description || item.summary || "Click below to read the full article.";
-    const source = item.source || "Candid News";
+    // Defaulting to English fallbacks
+    const title = item.title || "Latest News Update";
+    const description = item.description || item.summary || "No description available in English.";
+    const source = item.source || "Candid";
 
     card.innerHTML = `
         <small>${source} — ${new Date().toLocaleTimeString('en-US')}</small>
@@ -104,5 +94,10 @@ function renderCard(item) {
     }
 }
 
+function displayMessage(msg) {
+    streamContainer.innerHTML = `<div class="card"><h3>Update</h3><p>${msg}</p></div>`;
+}
+
+// Initial Fetch
 fetchCandidNews();
 setInterval(streamNextArticle, 5000);
