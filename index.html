@@ -2,22 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Candid News Stream</title>
+    <title>Candid Stream Viewer</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="terminal-container">
-        <header class="terminal-header">
-            <div class="status-group">
-                <span class="pulse"></span>
-                <h1>STREAM VIEWER</h1>
+    <div class="stream-container">
+        <header class="stream-header">
+            <div class="title-wrapper">
+                <div class="status-dot"></div>
+                <h1>CANDID NEWS STREAM</h1>
             </div>
-            <button id="connectBtn">Connect to API</button>
+            <button id="connectBtn">Connect</button>
         </header>
-        
         <div id="terminal" class="terminal-body">
-            <div class="line system">-- System Ready. Press Connect to stream data --</div>
+            <div class="system-msg">System initialized. Click Connect to fetch data.</div>
         </div>
     </div>
     <script src="script.js"></script>
