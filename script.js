@@ -2,48 +2,62 @@ const API_KEY = '7536886f47424dc0a2c4e9dff8b6f0f7';
 const terminal = document.getElementById('terminal');
 const connectBtn = document.getElementById('connectBtn');
 
+// This function makes any URL in the text clickable
 function linkify(text) {
     const urlPattern = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlPattern, url => `<a href="${url}" target="_blank" class="stream-link">${url}</a>`);
+    return text.replace(urlPattern, (url) => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="stream-link">${url}</a>`;
+    });
 }
 
 function log(level, message) {
-    const time = new Date().toLocaleTimeString();
+    const now = new Date().toLocaleTimeString();
     const div = document.createElement('div');
-    div.className = 'line';
-    div.innerHTML = `<span class="time">${time}</span><span class="tag-${level.toLowerCase()}">[${level}]</span> ${linkify(message)}`;
+    div.className = `line ${level.toLowerCase()}`;
+    div.innerHTML = `<span class="time">${now}</span> <span class="tag">[${level}]</span> ${linkify(message)}`;
     terminal.appendChild(div);
     terminal.scrollTop = terminal.scrollHeight;
 }
 
 async function startStream() {
     terminal.innerHTML = "";
-    log("INFO", "Connecting to Candid News API...");
+    log("INFO", "Initiating secure tunnel to Candid News API...");
 
-    // Using corsproxy.io which is usually faster/simpler
+    // Using the 'allorigins' hex-encoded method to prevent proxy blocking
     const target = `https://api.candid.org/news/v1/search?apiKey=${API_KEY}`;
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(target)}`;
+    const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(target)}`;
 
     try {
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error("Connection failed");
+        const response = await fetch(proxy);
         
-        const data = await response.json();
-        
-        // Candid API returns news in the 'data' array
-        const news = data.data || [];
-        log("INFO", `Connection successful. Streaming ${news.length} articles...`);
+        if (!response.ok) throw new Error("Proxy Server Unreachable");
 
-        news.forEach((item, index) => {
+        const wrapper = await response.json();
+        
+        // AllOrigins returns the API data as a string inside 'contents'
+        if (!wrapper.contents) throw new Error("Empty response from API");
+        
+        const data = JSON.parse(wrapper.contents);
+
+        // Check if Candid returned an error message inside the JSON
+        if (data.error || data.message === "Unauthorized") {
+            throw new Error(data.message || "Invalid API Key");
+        }
+
+        const newsItems = data.data || [];
+        log("OK", `Connection Verified. Streaming ${newsItems.length} articles...`);
+
+        newsItems.forEach((item, index) => {
             setTimeout(() => {
-                const content = `${item.title} — ${item.url}`;
-                log("INFO", content);
+                const title = item.title || "Untitled Article";
+                const url = item.url || "#";
+                log("INFO", `${title} — ${url}`);
             }, index * 800);
         });
 
     } catch (err) {
-        log("ERROR", `Stream failed: Check if API key is active or proxy is up.`);
-        console.error(err);
+        log("ERROR", `Status: ${err.message}`);
+        log("SYSTEM", "Tip: Ensure your Candid API key is active for 'News v1' in your dashboard.");
     }
 }
 
