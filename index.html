@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Vertical Stream</title>
+    <title>Candid News Stream</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <header>
-            <h1>Live Data Stream</h1>
-            <div id="status-indicator" class="online">Live</div>
+    <div class="terminal-container">
+        <header class="terminal-header">
+            <div class="status-group">
+                <span class="pulse"></span>
+                <h1>STREAM VIEWER</h1>
+            </div>
+            <button id="connectBtn">Connect to API</button>
         </header>
         
-        <main id="stream-container">
-            <div class="loading">Waiting for data...</div>
-        </main>
+        <div id="terminal" class="terminal-body">
+            <div class="line system">-- System Ready. Press Connect to stream data --</div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
